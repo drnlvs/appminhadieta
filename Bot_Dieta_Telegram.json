@@ -1,0 +1,1520 @@
+{
+  "name": "Bot_Dieta_Telegram_SUPA",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Chamada Telegram\n",
+        "height": 492,
+        "width": 1220,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3056,
+        928
+      ],
+      "typeVersion": 1,
+      "id": "b998e616-1714-4069-9406-7e21b03c1a9f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Agente Classificação",
+        "height": 444,
+        "width": 420,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1168,
+        560
+      ],
+      "typeVersion": 1,
+      "id": "ebf60970-89e0-43ff-bf7d-30444bb8c817",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "inputText": "=Você vai receber uma mensagem de um usuário, talvez seja originalmente de texto (pegue a mensagem 1) talvez seja originalmente de audio (pegue a mensagem 2). Pra você sempre será texto, pois estou transcrevendo antes.\n\nMensagem 1: \"{{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"text\"] }}\"\n\nMensagem 2: \"{{ $json.text }}\"\n\n\nClassifique a intenção da mensagem com base nas opções abaixo:\n\n- \"deleção\": se o usuário necessitar deletar um registro de refeição feita.\n\n- \"registro\": se o usuário estiver informando uma refeição feita.\n\n- \"consulta\": se o usuário estiver pedindo para ver, consultar ou buscar informações anteriores relacionadas a uma refeição feita da sua dieta\n\n- \"pesquisa\": se o usuário estiver perguntando / pedindo informações de calorias e macros de um alimento ou prato específico (não relacionado a uma refeição feita, somente uma dúvida de macros de um alimento)",
+        "categories": {
+          "categories": [
+            {
+              "category": "registro",
+              "description": "se o usuário estiver informando uma nova refeição feita"
+            },
+            {
+              "category": "consulta",
+              "description": "se o usuário estiver pedindo para consultar, saber ou buscar informações anteriores relacionadas a uma refeição de sua dieta, consumo calórico e macros"
+            },
+            {
+              "category": "pesquisa",
+              "description": "se o usuário estiver perguntando / pedindo informações de calorias e macros de um alimento ou prato específico (não relacionado a uma refeição feita, somente uma dúvida de macros de um alimento)"
+            },
+            {
+              "category": "deleção",
+              "description": "se o usuário necessitar deletar um registro de refeição feita"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        -1088,
+        640
+      ],
+      "id": "1e5c7f42-457b-4f11-8291-9ff2be316772",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -976,
+        864
+      ],
+      "id": "c72793f9-604c-4f5b-b049-64526c3e880e",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nhZkMzalw3ywxdEs",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Mensagem do usuário:\n{{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"text\"] }}\nou\n{{ $json.text }}\n\nQuem está perguntando?: (sempre filtre somente minhas refeições na tabela do banco de dados, usando a coluna \"id_usuario\" da tabela antes de responder): Compare com esse id {{ $('Telegram Trigger').item.json.message.from.id }}\n\n\nA data de hoje é:\n{{ $now }}\n",
+        "options": {
+          "systemMessage": "=Você é um nutricionista. Sua função é responder perguntas sobre  \na dieta do usuário, registro de refeições anteriores e total de calorias e macros consultando uma planilha com registros diários.  \n\nVocê tem duas ferramentas:  \n\n- 'Get a row in Supabase', tabela do Supabase, onde está registrada todas as refeições gravadas pelo usuário\t\n\n- 'Calculator', que soma valores e conta registros\n\nSempre que a pergunta mencionar períodos como \"ontem\", \"hoje\", \"semana passada\", converta isso para uma data exata no formato YYYY-MM-AA **antes de usar a ferramenta da planilha**.\n\nUse a coluna \"data\" da tabela \"registros_dieta\" para filtrar. Considere que a data de hoje é {{ $now }}.\nExemplo: se hoje for '2025-07-13' e a pergunta for \"ontem\", você deve consultar os registros com data igual a '2025-07-12'.\n\nOrdene pela coluna \"id\" da tabela \"registros_dieta\" e pegue o último (o maior) registro para o usuário que está perguntando considerando a coluna \"id_usuario\" da tabela para filtrar somente as refeições deste usuário. Para o fator comparação, o usuário que está perguntando é: {{ $('Telegram Trigger').item.json.message.from.id }}\n\nCaso o usuário pergunte sobre a refeição de outro usuário informando o nome do mesmo, valide que o id do usuário que está perguntando que é {{ $('Telegram Trigger').item.json.message.from.id }} e se for diferente do id contido na tabela para o nome do usuário citado, responda ao mesmo  que ele não tem permissão de consulta sobre as refeições de outro usuário.\n\nNunca use a data de hoje se a pergunta for \"ontem\". \nSempre use 'calculator' para somar os valores e contar os registros encontrados.\n\nSua resposta final deve ser uma frase única, no estilo Whatsapp. E NUNCA adicione uma nova pergunta ao final da resposta, você não irá tentar continuar o diálogo.\nSempre responda como um assistente atencioso."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -592,
+        960
+      ],
+      "id": "65f799ae-d807-420e-ae0f-e7139938a449",
+      "name": "AI consultar dados dieta"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -688,
+        1200
+      ],
+      "id": "37bdb604-47fc-44a3-8b77-4c891e488dcc",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nhZkMzalw3ywxdEs",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        1216
+      ],
+      "id": "fe70b3d9-20b2-466b-8477-cb0d4164ccea",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "content": "## Agente Consulta\n",
+        "height": 600,
+        "width": 540
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -736,
+        832
+      ],
+      "typeVersion": 1,
+      "id": "9fe5676e-3b3f-434a-96c7-b46120254391",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Agente Inserção\n",
+        "height": 600,
+        "width": 540
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -736,
+        224
+      ],
+      "typeVersion": 1,
+      "id": "40f1e9b8-ec6e-4192-bcb7-36543e511593",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=A seguir, você receberá uma mensagem que descreve uma refeição feita pelo usuário, extraia os seguintes campos:\n\n- Data: (a data que foi feita a refeição, caso não seja nada especificado use a data de hoje, sempre no formato: 2025-07-07)\n- IdUsuário: {{ $('Telegram Trigger').item.json.message.chat.id }}\n- Usuário:  {{ $('Telegram Trigger').item.json.message.from.first_name }} {{ $('Telegram Trigger').item.json.message.from.last_name }}\n- Refeição: (Exemplo: Café da Manhã, Almoço, Sobremesa, Café da Tarde, Jantar, Ceia, Outro)\n- Alimento: Descrição resumida da refeição (o que foi consumido)\n- Kcal: Você deverá pesquisar quantas calorias possui o alimento (toda a refeição) descrito pelo usuário\n- Proteína (g): Você deverá pesquisar quanto de proteína possui o alimento (toda a refeição) descrito pelo usuário\n- Carboidrato (g): Você deverá pesquisar quanto de carboidrato possui o alimento (toda a refeição) descrito pelo usuário\n- Gordura (g): Você deverá pesquisar quanto de gordura possui o alimento (toda a refeição) descrito pelo usuário\n- Resumo da operação que foi feita, para ser enviado via mensagem de confirmação por um assistente. A mensagem deve confirmar a operação de forma simpática e objetiva, como se fosse enviada por um atendente no WhatsApp.\n\nMensagem:\n{{ $json.message.text }} ou {{ $json.text }}\n\nData de hoje:\n{{ $now }}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Você é um nutricionista. Sua função é interpretar mensagens de texto do usuário relacionadas a sua dieta e o seu registro de refeições, total de calorias e macros dessas refeições (proteínas, carboidratos e gorduras) e extrair os dados de forma estruturada, com o objetivo de preencher automaticamente uma tabela no banco de dados do Supabase.  \n\nPara preencher o campo \"data\". considere que a data de hoje é sempre {{ $now }}.\nCaso o usuário não informe a data, sempre usar a data de hoje que é {{ $now }}. \n\nNunca use a data de hoje se a mensagem for referente a \"ontem\". \n\nAlém disso, você deve gerar uma frase de confirmação no campo \"resumo\", em tom simpático e direto, como se fosse um atendente humano respondendo no WhatsApp.\n\nO texto deve confirmar que a refeição/alimento foi registrada com sucesso, citando os principais dados como refeição, alimento e calorias.\n\nEscreva a frase em uma única linha, sem quebras.\nNUNCA coloque uma pergunta ao final da resposta (para tentar continuar o diálogo), pois você não terá memória para manter o contexto do mesmo diálogo.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -592,
+        368
+      ],
+      "id": "74aa628b-97bb-4438-89e3-3e564ceb4f6a",
+      "name": "AI inserir dados dieta"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"data\": \"2025-07-07\",\n  \"IdUsuário\": \"1871402179\",\n  \"usuário\": \"Adriano Alves\",\n  \"refeição\": \"Café da Manhã\",\n  \"alimento\": \"2 ovos\",\n  \"kcal\": 140,\n  \"proteina\": 12,\n  \"carboidrato\": 1,\n  \"gordura\": 10,\n  \"resumo\": \"Refeição registrada: 2 ovos no Café da Manhã com um total de 140 calorias.\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -336,
+        672
+      ],
+      "id": "6e2da41d-835e-4383-b2bd-a5091b0f08e5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        672
+      ],
+      "id": "910095b3-e174-4f2d-8dea-a03e6023f009",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "nhZkMzalw3ywxdEs",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Resposta ao usuário\n",
+        "height": 1484,
+        "width": 256,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -192,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "73a91448-9eb2-41da-833d-a3c64ca6910d",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -144,
+        1024
+      ],
+      "id": "a19baa73-5c3b-49af-8165-0d7abd0c0edc",
+      "name": "Resposta Consulta",
+      "webhookId": "5c322499-4a84-42be-86fb-dbcb7ad5595a",
+      "credentials": {
+        "telegramApi": {
+          "id": "ezxNKaWdoEGHDEyY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}",
+        "text": "={{ $json.output.resumo }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -128,
+        672
+      ],
+      "id": "ebf68e7b-1d01-4ff2-8892-199448021ba5",
+      "name": "Resposta Inserção",
+      "webhookId": "4e52ad63-f4e2-4e81-b6cf-6c5f49e41c48",
+      "credentials": {
+        "telegramApi": {
+          "id": "ezxNKaWdoEGHDEyY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Inserção de dados no Supabase\n",
+        "height": 320,
+        "width": 256,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -192,
+        224
+      ],
+      "typeVersion": 1,
+      "id": "6f498bc7-797d-47a7-9298-80185e744a8e",
+      "name": "Sticky Note5",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}",
+        "text": "=Olá, {{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"first_name\"] }}. Você ainda não tem acesso ao nosso bot de controle de dieta. Favor entrar em contato com drn.lvs@gmail.com. ",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2064,
+        1248
+      ],
+      "id": "a81c00f3-d45d-4f61-81b0-09f720eaec71",
+      "name": "Resposta Sem Permissão",
+      "webhookId": "90067470-3736-4dd6-9500-780425cb7e45",
+      "credentials": {
+        "telegramApi": {
+          "id": "ezxNKaWdoEGHDEyY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot8013974716:AAGvzjcg7un9lMACpy5SAR4e2jsWUcT_eVw/getFile?file_id={{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"voice\"][\"file_id\"] }}",
+        "options": {}
+      },
+      "id": "453d0a25-28f7-40cb-af66-1ce289f557be",
+      "name": "Get File (Telegram)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -1744,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://api.telegram.org/file/bot8013974716:AAGvzjcg7un9lMACpy5SAR4e2jsWUcT_eVw/' + $json.result.file_path }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "id": "5f3a836d-71be-4b66-a266-5928a1c5295b",
+      "name": "Download Áudio (.oga)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -1328,
+        800
+      ],
+      "id": "9a768082-290b-4722-8b61-1d1a0be8de8c",
+      "name": "Transcribe a recording",
+      "credentials": {
+        "openAiApi": {
+          "id": "nhZkMzalw3ywxdEs",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Transcrição de áudio",
+        "height": 268,
+        "width": 660,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1824,
+        736
+      ],
+      "typeVersion": 1,
+      "id": "abd03f78-3db7-45ab-a2a9-8e887268ae64",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -624,
+        1760
+      ],
+      "id": "18b3bd03-1999-4174-a681-e7fd18649d01",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "nhZkMzalw3ywxdEs",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        1776
+      ],
+      "id": "54adb072-0bff-4d9f-a8c4-2dbba756f410",
+      "name": "Calculator1"
+    },
+    {
+      "parameters": {
+        "content": "## Agente Pesquisa\n",
+        "height": 600,
+        "width": 540
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -736,
+        1424
+      ],
+      "typeVersion": 1,
+      "id": "16a86af9-6263-4b04-8c66-bc00418ad746",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Mensagem do usuário:\n{{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"text\"] }}\nou\n{{ $json.text }}\n\n",
+        "options": {
+          "systemMessage": "=Você é um nutricionista. Sua função é responder perguntas sobre  \nalimentos, suas calorias e macros.\nPesquise os valores exatos de calorias, carboidratos, proteínas e gorduras dos alimentos que o usuário solicitar. \nCaso seja um alimento composto (uma receita), pesquise (use a ferramenta Think) a receita mais comum e calcule as quantidades de macros de cada ingrediente, somando posteriormente (use a ferramenta Calculator).\nAlém disso, faça a sugestões sobre o alimento, por exemplo se ele é saudável e deve ser consumido com frequencia, além do melhor horário para consumi-lo considerando fatores como percentual de proteína, geração de energia do alimento e índice glicemico do mesmo.\n\n\nVocê tem uma ferramenta:  \n\n- 'Think', utilize para melhorar e aprofundar a sua resposta, dando um ar \"pessoal e humano\" a cada resposta\n\n- 'Calculator', que soma valores e conta registros, caso seja necessário somar calorias e macros (no caso do usuário perguntar sobre pratos que são compostos por mais de 1 alimento)\n\nSua resposta final deve ser uma frase única, no estilo Whatsapp.\nNUNCA coloque uma pergunta ao final da resposta (para tentar continuar o diálogo), pois você não terá memória para manter o contexto do mesmo diálogo.\nSempre responda como um assistente atencioso."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -592,
+        1552
+      ],
+      "id": "d49aba04-4150-4546-a583-de6f432b7e12",
+      "name": "AI pesquisa alimento"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -144,
+        1632
+      ],
+      "id": "2f51d413-3a1a-426a-b1b7-de192230414b",
+      "name": "Resposta Pesquisa",
+      "webhookId": "66cfe376-b089-46bc-b25d-ea016b9852ad",
+      "credentials": {
+        "telegramApi": {
+          "id": "ezxNKaWdoEGHDEyY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}",
+        "text": "=Qual das refeições abaixo você quer deletar?\n\nOpção 1: {{ $json.infoRefeicao1 }}\n\nOpção 2: {{ $json.infoRefeicao2 }}\n\nOpção 3: {{ $json.infoRefeicao3 }}\n\n",
+        "replyMarkup": "replyKeyboard",
+        "replyKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "Opção 1",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "Opção 2",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "Opção 3",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "replyKeyboardOptions": {
+          "resize_keyboard": true
+        },
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -944,
+        1056
+      ],
+      "id": "c4fc81d6-e0c1-491c-acb5-f63199c128ee",
+      "name": "Opções Deleção",
+      "webhookId": "573e98e7-13cb-404a-8769-d7e53126c907",
+      "credentials": {
+        "telegramApi": {
+          "id": "ezxNKaWdoEGHDEyY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2896,
+        1040
+      ],
+      "id": "2c46c5be-b772-4004-b744-add70f3fa9ae",
+      "name": "Telegram Trigger",
+      "webhookId": "1d3433d1-9b57-4165-834a-7717b8e96dd4",
+      "credentials": {
+        "telegramApi": {
+          "id": "ezxNKaWdoEGHDEyY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Deleção de Registros",
+        "height": 768,
+        "width": 1084,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1824,
+        1008
+      ],
+      "typeVersion": 1,
+      "id": "ecadcbe2-cd18-4aa7-9278-7274ed466b96",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "registros_dieta",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id_usuario",
+              "keyValue": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        1232
+      ],
+      "id": "9fbc0922-8061-4269-bd06-fb239b0d82ea",
+      "name": "Get a row in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tJefoAd8lxpP8RNU",
+          "name": "Supabase account_MinhaDieta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "registros_dieta",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "data",
+              "fieldValue": "={{ $json.output.data }}"
+            },
+            {
+              "fieldId": "id_usuario",
+              "fieldValue": "={{ $json.output['IdUsuário'] }}"
+            },
+            {
+              "fieldId": "usuario",
+              "fieldValue": "={{ $json.output['usuário'] }}"
+            },
+            {
+              "fieldId": "refeicao",
+              "fieldValue": "={{ $json.output['refeição'] }}"
+            },
+            {
+              "fieldId": "alimento",
+              "fieldValue": "={{ $json.output.alimento }}"
+            },
+            {
+              "fieldId": "kcal",
+              "fieldValue": "={{ $json.output.kcal }}"
+            },
+            {
+              "fieldId": "proteina",
+              "fieldValue": "={{ $json.output.proteina }}"
+            },
+            {
+              "fieldId": "carboidrato",
+              "fieldValue": "={{ $json.output.carboidrato }}"
+            },
+            {
+              "fieldId": "gordura",
+              "fieldValue": "={{ $json.output.gordura }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        352
+      ],
+      "id": "719f948f-a2ce-4d44-8e20-7f8259d9211e",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tJefoAd8lxpP8RNU",
+          "name": "Supabase account_MinhaDieta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "registros_dieta",
+        "limit": 3,
+        "filterType": "string",
+        "filterString": "=id_usuario=eq.{{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}&order=id.desc"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1392,
+        1056
+      ],
+      "id": "a9cf24c6-ffc3-458f-9517-ab16a9b75d36",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tJefoAd8lxpP8RNU",
+          "name": "Supabase account_MinhaDieta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3dee0fdf-1c60-48dd-a17d-bf549d5dc4c8",
+              "name": "Id1",
+              "value": "={{ $item(\"0\").$node[\"Get many rows\"].json[\"id\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "fb0934ca-fa73-4d5c-ba0d-acbf7808970b",
+              "name": "infoRefeicao1",
+              "value": "={{ $item(\"0\").$node[\"Get many rows\"].json[\"refeicao\"] }} em {{ $item(\"0\").$node[\"Get many rows\"].json[\"data\"] }}, com {{ $item(\"0\").$node[\"Get many rows\"].json[\"alimento\"] }} total de {{ $item(\"0\").$node[\"Get many rows\"].json[\"kcal\"] }} Kcal.",
+              "type": "string"
+            },
+            {
+              "id": "3dc704fd-6ce3-4d3a-9dbb-6662e5a815f3",
+              "name": "Id2",
+              "value": "={{ $item(\"1\").$node[\"Get many rows\"].json[\"id\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "88b15241-fc69-4593-b7cb-4259a9ad65d9",
+              "name": "infoRefeicao2",
+              "value": "={{ $item(\"1\").$node[\"Get many rows\"].json[\"refeicao\"] }} em {{ $item(\"1\").$node[\"Get many rows\"].json[\"data\"] }}, com {{ $item(\"1\").$node[\"Get many rows\"].json[\"alimento\"] }} total de {{ $item(\"1\").$node[\"Get many rows\"].json[\"kcal\"] }} Kcal.",
+              "type": "string"
+            },
+            {
+              "id": "b846b43b-dfc9-41d2-aac4-041ced4c3c62",
+              "name": "Id3",
+              "value": "={{ $item(\"2\").$node[\"Get many rows\"].json[\"id\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "68a4c68a-5ae8-4dce-9083-ae9c8dced57c",
+              "name": "infoRefeicao3",
+              "value": "={{ $item(\"2\").$node[\"Get many rows\"].json[\"refeicao\"] }} em {{ $item(\"2\").$node[\"Get many rows\"].json[\"data\"] }}, com {{ $item(\"2\").$node[\"Get many rows\"].json[\"alimento\"] }} total de {{ $item(\"2\").$node[\"Get many rows\"].json[\"kcal\"] }} Kcal.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1200,
+        1056
+      ],
+      "id": "f83982b2-f03e-41d2-ad30-74843a0f9fef",
+      "name": "Edit Fields1",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "registros_dieta",
+        "limit": 3,
+        "filterType": "string",
+        "filterString": "=id_usuario=eq.{{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}&order=id.desc"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1664,
+        1232
+      ],
+      "id": "a2e1dacb-b7ef-4538-b5ed-60742ddcb51d",
+      "name": "Get many rows1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tJefoAd8lxpP8RNU",
+          "name": "Supabase account_MinhaDieta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3dee0fdf-1c60-48dd-a17d-bf549d5dc4c8",
+              "name": "IdDeletar",
+              "value": "={{ $item(\"0\").$node[\"Get many rows1\"].json[\"id\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "fb0934ca-fa73-4d5c-ba0d-acbf7808970b",
+              "name": "infoRefeicaoDeletar",
+              "value": "={{ $item(\"0\").$node[\"Get many rows1\"].json[\"refeicao\"] }} em {{ $item(\"0\").$node[\"Get many rows1\"].json[\"data\"] }}, com {{ $item(\"0\").$node[\"Get many rows1\"].json[\"alimento\"] }} total de {{ $item(\"0\").$node[\"Get many rows1\"].json[\"kcal\"] }} Kcal.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1472,
+        1232
+      ],
+      "id": "62f6c05e-f3f9-46c5-a8c7-03a10b6611ff",
+      "name": "Edit Fields2",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "registros_dieta",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.IdDeletar }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1264,
+        1232
+      ],
+      "id": "3c9f3a1c-c248-4566-8527-06f48b25728e",
+      "name": "Delete a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tJefoAd8lxpP8RNU",
+          "name": "Supabase account_MinhaDieta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}",
+        "text": "={{ $json.refeicao }} com {{ $json.alimento }} deletado com sucesso!",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -976,
+        1408
+      ],
+      "id": "f9892e83-05eb-42d3-8f75-66b8b689940d",
+      "name": "Resposta Final Delete",
+      "webhookId": "66cfe376-b089-46bc-b25d-ea016b9852ad",
+      "credentials": {
+        "telegramApi": {
+          "id": "ezxNKaWdoEGHDEyY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "registros_dieta",
+        "limit": 3,
+        "filterType": "string",
+        "filterString": "=id_usuario=eq.{{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}&order=id.desc"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1664,
+        1408
+      ],
+      "id": "588d8f64-79f0-4646-b48a-65cfed44c47b",
+      "name": "Get many rows2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tJefoAd8lxpP8RNU",
+          "name": "Supabase account_MinhaDieta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3dee0fdf-1c60-48dd-a17d-bf549d5dc4c8",
+              "name": "IdDeletar",
+              "value": "={{ $item(\"1\").$node[\"Get many rows2\"].json[\"id\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "fb0934ca-fa73-4d5c-ba0d-acbf7808970b",
+              "name": "infoRefeicaoDeletar",
+              "value": "={{ $item(\"1\").$node[\"Get many rows2\"].json[\"refeicao\"] }} em {{ $item(\"1\").$node[\"Get many rows2\"].json[\"data\"] }}, com {{ $item(\"1\").$node[\"Get many rows2\"].json[\"alimento\"] }} total de {{ $item(\"1\").$node[\"Get many rows2\"].json[\"kcal\"] }} Kcal.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1472,
+        1408
+      ],
+      "id": "4e80f125-73d5-4169-b199-f608f80672cb",
+      "name": "Edit Fields3",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "registros_dieta",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.IdDeletar }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1264,
+        1408
+      ],
+      "id": "e5628e83-6c65-4ee3-894b-20be13a14ac5",
+      "name": "Delete a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tJefoAd8lxpP8RNU",
+          "name": "Supabase account_MinhaDieta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "registros_dieta",
+        "limit": 3,
+        "filterType": "string",
+        "filterString": "=id_usuario=eq.{{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}&order=id.desc"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1664,
+        1600
+      ],
+      "id": "bda5afe0-d4ac-407e-9667-3831b6a0a1e3",
+      "name": "Get many rows3",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tJefoAd8lxpP8RNU",
+          "name": "Supabase account_MinhaDieta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "registros_dieta",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.IdDeletar }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1264,
+        1600
+      ],
+      "id": "53e0c8d6-7344-4534-a419-6355bc7583c5",
+      "name": "Delete a row2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "tJefoAd8lxpP8RNU",
+          "name": "Supabase account_MinhaDieta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3dee0fdf-1c60-48dd-a17d-bf549d5dc4c8",
+              "name": "IdDeletar",
+              "value": "={{ $item(\"2\").$node[\"Get many rows3\"].json[\"id\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "fb0934ca-fa73-4d5c-ba0d-acbf7808970b",
+              "name": "infoRefeicaoDeletar",
+              "value": "={{ $item(\"2\").$node[\"Get many rows3\"].json[\"refeicao\"] }} em {{ $item(\"2\").$node[\"Get many rows3\"].json[\"data\"] }}, com {{ $item(\"2\").$node[\"Get many rows3\"].json[\"alimento\"] }} total de {{ $item(\"2\").$node[\"Get many rows3\"].json[\"kcal\"] }} Kcal.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1472,
+        1600
+      ],
+      "id": "cbbb3b84-bb06-4641-9c3b-226228c8f3c4",
+      "name": "Edit Fields4",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "cad_usuarios",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id_usuario",
+              "condition": "eq",
+              "keyValue": "={{ parseInt($json.message.chat.id) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2608,
+        1040
+      ],
+      "id": "a31259e2-e0c2-4f5e-9d9d-bb270cdcee72",
+      "name": "Get many rows4",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "tJefoAd8lxpP8RNU",
+          "name": "Supabase account_MinhaDieta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a3b49792-5a49-4dff-afb8-4aca84797c73",
+              "leftValue": "={{ $item(\"0\").$node[\"Telegram Trigger\"].json[\"message\"][\"chat\"][\"id\"] }}",
+              "rightValue": "={{ $item(\"0\").$node[\"Get many rows4\"].json[\"id_usuario\"] }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2352,
+        1040
+      ],
+      "id": "04de70f4-3d80-4402-b7b0-0093ef0554b2",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 6,
+        "output": "={{\n  $node[\"Telegram Trigger\"].json[\"message\"][\"voice\"] !== undefined ? 1 :\n  $node[\"Telegram Trigger\"].json[\"message\"][\"text\"].includes('Opção 1') ? 2 :\n  $node[\"Telegram Trigger\"].json[\"message\"][\"text\"].includes('Opção 2') ? 3 :\n  $node[\"Telegram Trigger\"].json[\"message\"][\"text\"].includes('Opção 3') ? 4 :\n  5 \n}}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -2064,
+        944
+      ],
+      "id": "a5e03a8b-0696-455b-9222-d72eaccbfcc7",
+      "name": "Switch2",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        544
+      ],
+      "id": "74c50952-888f-4228-9499-36d22472a946",
+      "name": "No Operation, do nothing"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "AI inserir dados dieta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI consultar dados dieta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI pesquisa alimento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI consultar dados dieta",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI consultar dados dieta",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI consultar dados dieta": {
+      "main": [
+        [
+          {
+            "node": "Resposta Consulta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI inserir dados dieta",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI inserir dados dieta",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI inserir dados dieta": {
+      "main": [
+        [
+          {
+            "node": "Resposta Inserção",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File (Telegram)": {
+      "main": [
+        [
+          {
+            "node": "Download Áudio (.oga)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Áudio (.oga)": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI pesquisa alimento",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI pesquisa alimento",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI pesquisa alimento": {
+      "main": [
+        [
+          {
+            "node": "Resposta Pesquisa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many rows4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a row in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI consultar dados dieta",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Opções Deleção",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Delete a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a row": {
+      "main": [
+        [
+          {
+            "node": "Resposta Final Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Delete a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a row1": {
+      "main": [
+        [
+          {
+            "node": "Resposta Final Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Delete a row2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a row2": {
+      "main": [
+        [
+          {
+            "node": "Resposta Final Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows4": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Switch2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta Sem Permissão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch2": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get File (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get many rows1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get many rows2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get many rows3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "eeaa6a01-7664-45f7-baca-8a88969b6b4e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "05ee6aceed4c375cfd4629b86356f182c3c26af2d54d45680f5d9375c03d821f"
+  },
+  "id": "UmVVeDdyOCQN8jbs",
+  "tags": []
+}
