@@ -1,3 +1,4 @@
+/* --- Estilos Base (Mobile-First) --- */
 body {
     font-family: 'Poppins', sans-serif;
     background-color: #121212;
@@ -7,7 +8,7 @@ body {
 }
 
 .container {
-    width: 80%;
+    width: 90%;
     margin: 0 auto;
     max-width: 1100px;
 }
@@ -16,22 +17,24 @@ header {
     background: #1F1F1F;
     padding: 1rem 0;
     border-bottom: 1px solid #333;
+    position: fixed; /* Fixa o cabeçalho */
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000; /* Garante que ele fique na frente de outros conteúdos */
 }
 
 header .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.logo h2 {
-    margin: 0;
-    color: #FFA500; /* Laranja para destaque */
+    flex-direction: column; /* Empilhado no mobile */
 }
 
 .logo {
     display: flex;
     align-items: center;
+    margin-bottom: 1rem;
 }
 
 .logo img {
@@ -39,54 +42,84 @@ header .container {
     margin-right: 15px;
 }
 
+.logo h2 {
+    margin: 0;
+    color: #FFA500;
+}
+
+/* Navegação Mobile */
 nav ul {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
+    display: none; /* Escondido por padrão */
+    flex-direction: column;
+    width: 100%;
+    text-align: center;
+}
+
+nav ul.active {
+    display: flex; /* Mostra quando o menu está ativo */
 }
 
 nav ul li {
-    margin-left: 20px;
+    margin: 0.5rem 0;
 }
 
 nav a {
     color: #FFFFFF;
     text-decoration: none;
     font-weight: 600;
+    display: block;
+    padding: 0.5rem;
 }
 
+.hamburger-menu {
+    display: block;
+    cursor: pointer;
+    position: absolute;
+    top: 25px;
+    right: 25px;
+}
+
+.hamburger-menu div {
+    width: 25px;
+    height: 3px;
+    background-color: #FFFFFF;
+    margin: 5px 0;
+    transition: 0.4s;
+}
+
+/* Conteúdo Principal */
 .hero {
     text-align: center;
     padding: 4rem 0;
 }
 
 .hero h1 {
-    font-size: 2.5rem;
+    font-size: 2rem;
     margin-bottom: 1rem;
 }
 
 .hero p {
-    font-size: 1.2rem;
-    max-width: 600px;
-    margin: 0 auto 2rem;
+    font-size: 1rem;
+    margin-bottom: 2rem;
 }
 
 .problem {
-    padding: 4rem 0;
+    padding: 2rem 0;
     text-align: center;
 }
 
 .problem p {
-    font-size: 1.1rem;
-    max-width: 700px;
-    margin: 0 auto;
+    font-size: 1rem;
+    max-width: 100%;
 }
 
 .cta-button {
     background-color: #FFA500;
     color: #FFFFFF;
-    padding: 15px 30px;
+    padding: 15px 25px;
     text-decoration: none;
     border-radius: 5px;
     font-weight: 700;
@@ -98,10 +131,16 @@ nav a {
 }
 
 .hero-images {
-    margin-top: 3rem;
+    margin-top: 2rem;
     display: flex;
-    justify-content: center;
-    gap: 2rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.hero-images img {
+    max-width: 80%;
+    border-radius: 8px;
 }
 
 .features {
@@ -111,14 +150,14 @@ nav a {
 
 .features h2 {
     text-align: center;
-    font-size: 2.2rem;
-    margin-bottom: 3rem;
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
 }
 
 .feature-cards {
     display: flex;
-    justify-content: space-around;
-    gap: 2rem;
+    flex-direction: column; /* Empilhado no mobile */
+    gap: 1.5rem;
 }
 
 .card {
@@ -126,7 +165,6 @@ nav a {
     padding: 2rem;
     border-radius: 8px;
     text-align: center;
-    flex-basis: 30%;
 }
 
 .how-it-works {
@@ -135,14 +173,12 @@ nav a {
 }
 
 .how-it-works h2 {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     margin-bottom: 1rem;
 }
 
 .how-it-works p {
-    font-size: 1.1rem;
-    max-width: 700px;
-    margin: 0 auto;
+    font-size: 1rem;
 }
 
 .cta-final {
@@ -153,7 +189,7 @@ nav a {
 }
 
 .cta-final h2 {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     margin-bottom: 2rem;
 }
 
@@ -172,4 +208,91 @@ footer {
     padding: 1.5rem 0;
     border-top: 1px solid #333;
     margin-top: 2rem;
+}
+
+/* --- Animações --- */
+.card, .hero h1, .hero p, .hero .cta-button, .hero-images img {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.card.visible, .hero h1.visible, .hero p.visible, .hero .cta-button.visible, .hero-images img.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- Media Query para Tablets --- */
+@media (min-width: 768px) {
+    .container {
+        width: 85%;
+    }
+
+    header .container {
+        flex-direction: row; /* Lado a lado no tablet */
+    }
+
+    .logo {
+        margin-bottom: 0;
+    }
+
+    .hamburger-menu {
+        display: none; /* Oculta o menu hambúrguer */
+    }
+
+    nav ul {
+        display: flex; /* Mostra o menu normal */
+        flex-direction: row;
+    }
+
+    nav ul li {
+        margin-left: 20px;
+        margin-bottom: 0;
+    }
+
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero p {
+        font-size: 1.2rem;
+        max-width: 600px;
+        margin: 0 auto 2rem;
+    }
+
+    .feature-cards {
+        flex-direction: row; /* Lado a lado no tablet */
+        justify-content: space-around;
+    }
+
+    .card {
+        flex-basis: 30%;
+    }
+    
+    .hero-images {
+        flex-direction: row; /* Lado a lado no tablet */
+        justify-content: center;
+        gap: 2rem;
+    }
+
+    .hero-images img {
+        max-width: 45%;
+    }
+
+    .features h2, .how-it-works h2, .cta-final h2 {
+        font-size: 2.2rem;
+    }
+
+    .how-it-works p {
+        font-size: 1.1rem;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+}
+
+/* --- Media Query para Desktops --- */
+@media (min-width: 1024px) {
+    .container {
+        width: 80%;
+    }
 }
