@@ -21,6 +21,28 @@
         .icon {
             color: #1A3E38;
         }
+        .zoomed-image-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9998;
+            cursor: zoom-out;
+        }
+        .zoomed-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            transform: scale(1); /* Initial state, will be scaled up by JS */
+            transition: transform 0.3s ease-in-out;
+            z-index: 9999;
+            cursor: zoom-out;
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -39,7 +61,6 @@
                 <a href="#" class="text-gray-600 hover:text-teal-600 transition duration-300">Início</a>
                 <a href="#exemplos" class="text-gray-600 hover:text-teal-600 transition duration-300">Exemplos</a>
                 <a href="#beneficios" class="text-gray-600 hover:text-teal-600 transition duration-300">Benefícios</a>
-                <a href="#depoimentos" class="text-gray-600 hover:text-teal-600 transition duration-300">Depoimentos</a>
                 <a href="#faq" class="text-gray-600 hover:text-teal-600 transition duration-300">FAQ</a>
             </div>
             <div class="flex items-center space-x-4">
@@ -122,20 +143,20 @@
                     <div class="bg-gray-100 p-8 rounded-3xl shadow-xl">
                         <picture>
                             <source srcset="data/Minha Dieta_Registro.webp" type="image/webp">
-                            <img src="data/Minha Dieta_Registro.webp" alt="Demonstração do registro de refeições no App Minha Dieta Bot" class="rounded-2xl">
+                            <img src="data/Minha Dieta_Registro.webp" alt="Demonstração do registro de refeições no App Minha Dieta Bot" class="rounded-2xl" onclick="toggleZoom(this)">
                         </picture>
                     </div>
                 </div>
                 <!-- Image 2: Consulta -->
                 <div class="flex justify-center">
                     <div class="bg-gray-100 p-8 rounded-3xl shadow-xl">
-                        <img src="data/Minha Dieta_Consulta.webp" alt="Demonstração da consulta de macros no App Minha Dieta Bot" class="rounded-2xl">
+                        <img src="data/Minha Dieta_Consulta.webp" alt="Demonstração da consulta de macros no App Minha Dieta Bot" class="rounded-2xl" onclick="toggleZoom(this)">
                     </div>
                 </div>
                 <!-- Image 3: Pesquisa -->
                 <div class="flex justify-center">
                     <div class="bg-gray-100 p-8 rounded-3xl shadow-xl">
-                        <img src="data/Minha Dieta_PesquisaAlimentos.webp" alt="Demonstração da pesquisa de alimentos no App Minha Dieta Bot" class="rounded-2xl">
+                        <img src="data/Minha Dieta_PesquisaAlimentos.webp" alt="Demonstração da pesquisa de alimentos no App Minha Dieta Bot" class="rounded-2xl" onclick="toggleZoom(this)">
                     </div>
                 </div>
             </div>
@@ -227,8 +248,8 @@
                 <p class="text-lg text-gray-600">Oferta por tempo limitado: assine agora e ganhe 50% de desconto no primeiro mês!</p>
             </div>
             <div class="md:w-1/3 flex justify-end">
-                <a href="https://buy.stripe.com/test_14A6oA1wuf5j6ZkgdsgjC00" class="bg-teal-600 text-white font-medium px-8 py-3 rounded-lg shadow-lg hover:bg-teal-700 transition duration-300" target="_blank" rel="noopener noreferrer">
-                    Assinar Agora
+                <a href="https://buy.stripe.com/test_14A6oA1wuf5j6ZkgdsgjC00" class="bg-teal-600 text-white font-medium px-10 py-4 rounded-lg shadow-lg hover:bg-teal-700 transition duration-300 text-lg" target="_blank" rel="noopener noreferrer">
+                    Assine Agora
                 </a>
             </div>
         </div>
@@ -323,7 +344,7 @@
 
     <script>
         // Função para alternar a visibilidade das respostas do FAQ
-                function toggleFAQ(element) {
+        function toggleFAQ(element) {
             const content = element.nextElementSibling;
             const icon = element.querySelector('svg');
             if (content.style.maxHeight) {
@@ -341,6 +362,67 @@
             setTimeout(() => {
                 card.classList.remove('ring-4', 'ring-teal-400', 'ring-opacity-75'); // Remove highlight after a short delay
             }, 1000); // 1 second delay
+        }
+
+        let currentZoomedImage = null; // To keep track of the original image
+
+        function toggleZoom(img) {
+            const body = document.body;
+            let overlay = document.getElementById('zoom-overlay');
+
+            if (overlay && overlay.contains(img)) { // If the clicked image is already in the overlay (meaning it's zoomed)
+                // Unzoom
+                overlay.remove();
+                body.style.overflow = ''; // Restore scrolling
+                if (currentZoomedImage) {
+                    currentZoomedImage.style.visibility = ''; // Make original visible
+                    currentZoomedImage = null;
+                }
+                document.removeEventListener('keydown', handleEscapeKey);
+            } else {
+                // Zoom in
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'zoom-overlay';
+                    overlay.classList.add('zoomed-image-overlay');
+                    overlay.addEventListener('click', (event) => {
+                        // Only unzoom if clicking the overlay itself, not the image
+                        if (event.target === overlay) {
+                            toggleZoom(img); // Call with the original image to unzoom
+                        }
+                    });
+                    body.appendChild(overlay);
+                }
+
+                // Hide any previously zoomed image
+                if (currentZoomedImage) {
+                    currentZoomedImage.style.visibility = '';
+                }
+
+                // Clone the image for zooming
+                const clonedImg = img.cloneNode(true);
+                clonedImg.classList.add('zoomed-image');
+                clonedImg.addEventListener('click', (event) => {
+                    event.stopPropagation(); // Prevent click on image from closing overlay
+                });
+
+                // Clear previous content and append new image
+                overlay.innerHTML = '';
+                overlay.appendChild(clonedImg);
+
+                // Hide original image and store reference
+                img.style.visibility = 'hidden';
+                currentZoomedImage = img;
+
+                body.style.overflow = 'hidden'; // Disable scrolling
+                document.addEventListener('keydown', handleEscapeKey);
+            }
+        }
+
+        function handleEscapeKey(event) {
+            if (event.key === 'Escape' && currentZoomedImage) {
+                toggleZoom(currentZoomedImage);
+            }
         }
     </script>
 
