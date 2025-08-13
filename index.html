@@ -43,31 +43,42 @@
                 <a href="#faq" class="text-gray-600 hover:text-teal-600 transition duration-300">FAQ</a>
             </div>
             <div class="flex items-center space-x-4">
-                <button class="text-teal-600 font-medium px-4 py-2 rounded-lg hover:bg-teal-50 transition duration-300">Ver oferta</button>
+                <button class="text-teal-600 font-medium px-6 py-3 rounded-lg hover:bg-teal-50 transition duration-300">Ver oferta</button>
             </div>
         </nav>
     </header>
 
     <!-- Hero Section -->
-    <main class="bg-gradient-hero py-20 md:py-32">
+    <main class="bg-gradient-hero py-10 md:py-16">
         <div class="container mx-auto px-4 text-center">
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                Cansado de planilhas e aplicativos complicados?
-                <br>Controle sua dieta sem esforço, direto no Telegram.
+                Seu <strong>agente de IA</strong> especializado em dieta diretamente no seu Telegram.
             </h1>
-            <p class="text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                Seu assistente de IA pessoal no Telegram para monitorar refeições, contar calorias e analisar macros de qualquer alimento.
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-10">
-                <a href="https://buy.stripe.com/test_14A6oA1wuf5j6ZkgdsgjC00" class="bg-teal-600 text-white font-medium px-8 py-3 rounded-lg shadow-lg hover:bg-teal-700 transition duration-300" target="_blank" rel="noopener noreferrer">
-                    Assine Agora
-                </a>
-                <button class="flex items-center justify-center space-x-2 text-teal-600 font-medium px-8 py-3 rounded-lg hover:bg-teal-50 transition duration-300">
+            <h2 class="text-2xl md:text-3xl font-semibold leading-tight mt-4 mb-10">
+                Cansado de planilhas e aplicativos complicados?
+                <br>Controle sua dieta sem esforço.
+            </h2>
+            <div class="text-center">
+                <button class="inline-flex items-center justify-center space-x-2 text-teal-600 font-bold px-12 py-4 rounded-lg hover:bg-teal-50 transition duration-300 mb-0 text-xl md:text-2xl" onclick="highlightCard()">
                     <span>Saiba como funciona</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7 1C5.9 1 5 1.9 5 3v18c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2H7zm0 2h2v18H7V3zm8 0c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-2zm0 2h2v16h-2V5z"/>
                     </svg>
                 </button>
+            </div>
+            <div id="featuresCard" class="bg-white p-6 rounded-lg shadow-md max-w-3xl mx-auto mb-8 text-left">
+                <p class="text-lg font-semibold mb-4">Simplifique sua dieta com um assistente de IA pessoal.</p>
+                <ul class="list-disc list-inside text-gray-700 space-y-2">
+                    <li><strong>Registro Inteligente:</strong> Envie sua refeição por texto ou áudio. A IA cuida do resto!</li>
+                    <li><strong>Controle Total:</strong> É só perguntar! Consulte suas refeições, calorias e macros a qualquer momento.</li>
+                    <li><strong>Flexibilidade:</strong> Exclua registros com comandos simples.</li>
+                    <li><strong>Informação na ponta dos dedos:</strong> Descubra calorias e macros de qualquer alimento e tome decisões mais inteligentes.</li>
+                </ul>
+            </div>
+                        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-10">
+                <a href="https://buy.stripe.com/test_14A6oA1wuf5j6ZkgdsgjC00" class="bg-teal-600 text-white font-medium px-10 py-4 rounded-lg shadow-lg hover:bg-teal-700 transition duration-300 text-lg" target="_blank" rel="noopener noreferrer">
+                    Assine Agora
+                </a>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-gray-600 font-medium max-w-2xl mx-auto">
                 <div class="flex items-center space-x-2">
@@ -191,7 +202,7 @@
                         </svg>
                         <h3 class="font-bold text-xl">Registro com IA</h3>
                     </div>
-                    <p class="text-gray-600">Descreva sua refeição ou envie uma foto e deixe a IA fazer o resto.</p>
+                    <p class="text-gray-600">Descreva sua refeição por mensagem de texto ou audio e deixe a IA fazer o resto.</p>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-md">
                     <div class="flex items-center space-x-2 mb-2 text-teal-600">
@@ -200,39 +211,13 @@
                         </svg>
                         <h3 class="font-bold text-xl">Acompanhe progresso</h3>
                     </div>
-                    <p class="text-gray-600">Veja evolução, metas e alertas de forma visual e motivadora.</p>
+                    <p class="text-gray-600">Consulte durante o dia sua contagem de calorias e macros para não errar na dieta.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Section: Resultados reais, pessoas de verdade -->
-    <section id="depoimentos" class="container mx-auto px-4 py-20">
-        <h2 class="text-3xl md:text-4xl font-bold mb-4">Resultados reais, pessoas de verdade</h2>
-        <p class="text-lg text-gray-600 mb-10 max-w-2xl">
-            Histórias de motivação e transformação com o Minha Dieta Bot.
-        </p>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="bg-white p-6 rounded-2xl shadow-md flex flex-col items-center text-center">
-                <img src="https://placehold.co/80x80/f8fafc/000000?text=Ana+P." alt="Foto de Ana P." class="rounded-full mb-4 border-2 border-teal-600 p-1">
-                <h4 class="font-bold text-lg">Ana P.</h4>
-                <p class="text-gray-500 text-sm">Usuário verificado</p>
-                <p class="mt-4 italic text-gray-700">"Em 2 meses, perdi 5kg. O bot tornou o processo leve e me ajudou a entender minhas escolhas do dia a dia."</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-md flex flex-col items-center text-center">
-                <img src="https://placehold.co/80x80/f8fafc/000000?text=Lucas+R." alt="Foto de Lucas R." class="rounded-full mb-4 border-2 border-teal-600 p-1">
-                <h4 class="font-bold text-lg">Lucas R.</h4>
-                <p class="text-gray-500 text-sm">Usuário verificado</p>
-                <p class="mt-4 italic text-gray-700">"Contar macros sempre foi um caos pra mim. Agora só descrevo a refeição e recebo os números na hora."</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-md flex flex-col items-center text-center">
-                <img src="https://placehold.co/80x80/f8fafc/000000?text=Lucas+R." alt="Foto de Lucas R." class="rounded-full mb-4 border-2 border-teal-600 p-1">
-                <h4 class="font-bold text-lg">Marina G.</h4>
-                <p class="text-gray-500 text-sm">Usuário verificado</p>
-                <p class="mt-4 italic text-gray-700">"Minha motivação mudou ao ver o progresso no Telegram. Simples, prático e realmente eficiente."</p>
-            </div>
-        </div>
-    </section>
+    
 
     <!-- Section: CTA -->
     <section class="bg-teal-50 py-20">
@@ -338,7 +323,7 @@
 
     <script>
         // Função para alternar a visibilidade das respostas do FAQ
-        function toggleFAQ(element) {
+                function toggleFAQ(element) {
             const content = element.nextElementSibling;
             const icon = element.querySelector('svg');
             if (content.style.maxHeight) {
@@ -348,6 +333,14 @@
                 content.style.maxHeight = content.scrollHeight + "px";
                 icon.style.transform = 'rotate(180deg)';
             }
+        }
+
+        function highlightCard() {
+            const card = document.getElementById('featuresCard');
+            card.classList.add('ring-4', 'ring-teal-400', 'ring-opacity-75'); // Add highlight
+            setTimeout(() => {
+                card.classList.remove('ring-4', 'ring-teal-400', 'ring-opacity-75'); // Remove highlight after a short delay
+            }, 1000); // 1 second delay
         }
     </script>
 
